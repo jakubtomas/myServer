@@ -1,7 +1,5 @@
 package sample;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
@@ -12,6 +10,8 @@ import java.util.List;
 @RestController
 public class DateAndTime {
     List<User> list = new ArrayList<User>();
+    List<String> log = new ArrayList<>();
+
 
     public DateAndTime() {
         list.add(new User("Roman", "sagan", "roman", "heslo"));
@@ -22,6 +22,9 @@ public class DateAndTime {
 
     @RequestMapping("/time")
     public String getTime() {
+
+
+
 
         // ak niesom prihlaseny tak cas my nevypise neautorazovani pristup
         Calendar cal = Calendar.getInstance();
@@ -78,59 +81,12 @@ public class DateAndTime {
     public String getHi(@RequestParam(value = "fname") String fname, @RequestParam(value = "age") String age) {
         return "Hello. How are you? Your name is " + fname + " and you are " + age;
     }
-
-
-    // POST METHOD/
-
-    /// postman body send {"login": "igor",
-    //                          "password": "tajne heslo"}
-
-
-
-    @RequestMapping(method = RequestMethod.POST, value = "/login")
-    public String login(@RequestBody String credential) {// premenna string credential prijaty JSON
-        System.out.println(credential);  /// request body odkial mam zobrat data z tela ziadosit
-        return "{\"Error\":\"Login already exists\"}"; // ak meno heslo je spravne  tak vrati naspet kto je prihlaseny
-        // aj he nespravne tak vratim prazdny JSON
-    }
-
     // todo and also Generate token
     // todo compare the password if is ok return object json with all data fName lastn name and so on
     // when you logout  delete token   need token and login name
 
 
-    @RequestMapping(method = RequestMethod.POST, value = "/signup")
 
-    public String signup(@RequestBody String data) { // input data from body html page
-
-        System.out.println("input data are under");
-        System.out.println(data);
-
-        JSONObject objj = null;
-        try {
-            objj = new JSONObject(data);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        if (objj.has("fname") && objj.has("lname") && objj.has("login") && objj.has("password")) {
-            System.out.println("I have alll name ");
-
-            System.out.println(" I have all ");
-            return "I have all name okey ";
-        } else {
-            System.out.println("I dont have all name ");
-            return "I dont have";
-        }
-
-
-        //  if(objj.has("fname") && objj.has("lname")&& objj.has("login")&& objj.has("password"))
-
-
-// todo create the hash bcrypt
-        // todo uniq login  you have to check  ,, use array list and compare data
-      //  return null;
-    }
 
 
 
