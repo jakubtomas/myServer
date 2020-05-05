@@ -288,6 +288,20 @@ public class UserController {
 
 
 
+////////////////////// LOG history my login
+    @RequestMapping(value = "/log")
+    public ResponseEntity<String> log(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
+
+        JSONObject obj = new JSONObject(data);
+        JSONObject res = new JSONObject();
+
+        User temp = getUser(obj.getString("login"));
+// nedokoncene
+        return null;
+
+    }
+
+
     private boolean checkPassword(String login, String password) {
         String pass;
         User user = getUser(login);
