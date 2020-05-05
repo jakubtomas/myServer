@@ -1,6 +1,7 @@
 package sample;
 
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mindrot.jbcrypt.BCrypt;
@@ -19,9 +20,16 @@ import java.util.Random;
 public class UserController {
     List<User> list = new ArrayList<User>();
     List<String> log = new ArrayList<>();
+    List<String> messages = new ArrayList<>();
 
     public UserController() {
-        list.add(new User("peter", "sagan", "sagan", "heslo123"));
+        list.add(new User("peter", "sagan", "sagan", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
+        list.add(new User("veronika", "veronika", "veronika", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
+/*
+        list.add(new User("peter", "juliana", "juliana", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
+        list.add(new User("peter", "dog", "Dog", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
+*/
+
     }
 
 
@@ -129,7 +137,7 @@ public class UserController {
 
     public ResponseEntity<String> login(@RequestBody String credential) throws JSONException {
 
-        JSONObject obj = new JSONObject(credential);/*don't copy*/
+        JSONObject obj = new JSONObject(credential);/*don't copy*/   // why
 
       // time actually
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("ddMMyy HH:mm:ss");
@@ -150,6 +158,11 @@ public class UserController {
                 return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(result.toString());
             }
 
+            String hashInputpassword = hash(obj.getString("password")); // create hash
+
+            System.out.println("your hash input password   " +  hashInputpassword) ;
+
+
             //check the existing the login and check password than is correct
             if(existLogin(obj.getString("login")) && checkPassword(obj.getString("login"), obj.getString("password")))
             {
@@ -165,8 +178,9 @@ public class UserController {
                 result.put("lname",loggedUser.getLname());
                 result.put("login",loggedUser.getLogin());
 
-                logHistory.put("type","login");
 
+                // put data into json object
+                logHistory.put("type","login");
                 logHistory.put("login",loggedUser.getLogin());
                 logHistory.put("datetime",loggedUser.getLogin());
 
@@ -248,16 +262,19 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST, value = "/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
-        JSONObject obj = new JSONObject(data);
-        JSONObject res = new JSONObject();
+        JSONObject obj = new JSONObject(data); // json from input data body
+        JSONObject res = new JSONObject();// result JSON
 
-        User temp = getUser(obj.getString("login"));
+        User temp = getUser(obj.getString("login")); // return object user according to login name
+
 
 
         if (temp == null) {
             res.put("error", "Incorrect login");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
         }
+
+        // check we have data like login old password and new password
 
         if (obj.has("login") && obj.has("oldpassword") && obj.has("newpassword")) {
 
@@ -289,6 +306,8 @@ public class UserController {
 
 
 ////////////////////// LOG history my login
+    // input json login : peter and into the header put the token
+
     @RequestMapping(value = "/log")
     public ResponseEntity<String> log(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
@@ -296,18 +315,177 @@ public class UserController {
         JSONObject res = new JSONObject();
 
         User temp = getUser(obj.getString("login"));
-// nedokoncene
-        return null;
+
+
+        if (temp == null  || !validToken(token) ) { // check we have user and check the token
+            res.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+
+        if (obj.has("login")  ) {
+            //existLogin(obj.getString("login")) && existLogin(obj.getString("acceptor")
+
+            if (existLogin(obj.getString("login"))) {
+               // res.put("message", "everythink is okey ");
+
+                for(int i = 0; i < log.size(); i++) {
+
+                    res.put("list" + i , log.get(i));
+                    System.out.print(log.get(i));
+                }
+
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            } else {
+                res.put("error", "login dos not exist in our database or array list   ");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            }
+
+
+        } else {
+            res.put("error", "empty login name");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+
+
+
+        //return null;
 
     }
 
 
+
+
+
+
+    @RequestMapping("/users") // get users according to token ??
+    public ResponseEntity<String> getUsers(@RequestParam(value="token") String token) throws JSONException {
+
+        if(token==null){
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{\"error\",\"Bad request\"}");
+        }
+        if(validToken(token)){
+            JSONArray array = new JSONArray();
+            for(User user : list){
+                JSONObject obj = new JSONObject();
+                obj.put("fname",user.getFname());
+                obj.put("lname",user.getLname());
+                obj.put("login",user.getLogin());
+                array.put(obj);
+            }
+
+            return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(array.toString());
+        }
+        else return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"Invalid token\"}");
+    }
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////  POST  NEW MESSAGE
+
+    @RequestMapping(method = RequestMethod.POST, value = "/message/new")
+    public ResponseEntity<String> sendMessage(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
+
+
+        JSONObject obj = new JSONObject(data);
+        JSONObject res = new JSONObject();
+
+        User temp = getUser(obj.getString("from"));
+
+        if (temp == null  || !validToken(token) ) { // check we have user and check the token
+            res.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+        if (obj.has("from") &&  obj.has("message") && obj.has("to")) {
+
+            if (existLogin(obj.getString("from")) && existLogin(obj.getString("to"))) {
+                // json add into array list
+                res.put("from", obj.getString("from"));   // sender
+                res.put("message", obj.getString("message"));   // message
+                res.put("to", obj.getString("to"));   // acceptor
+
+
+                System.out.println("message" + res.toString());
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.put(res);
+
+                System.out.println("jsonarray is  " + jsonArray);
+                messages.add(res.toString());
+
+
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+
+
+            } else {
+                res.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            }
+        } else {
+            res.put("mistake", "empty message or acceptor or login sender ");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+
+    }
+
+/////////////////////////////////////// GET MESSAGES
+
+    @RequestMapping(method = RequestMethod.GET, value = "/messages")
+    public ResponseEntity<String> getMessages(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
+
+
+        JSONObject obj = new JSONObject(data);
+        JSONObject res = new JSONObject();
+
+        User temp = getUser(obj.getString("login"));
+
+        if (temp == null  || !validToken(token) ) { // check we have user and check the token
+            res.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+        if (obj.has("login")   ) {
+
+            if (existLogin(obj.getString("login")) ) {
+                // json add into array list
+                res.put("from", obj.getString("login"));
+
+
+
+                //  put messages into json
+                for(int i = 0; i < messages.size(); i++) {
+
+                    res.put("message " + i, messages.get(i));
+                    System.out.print(messages.get(i));
+                }
+
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+
+
+            } else {
+                res.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            }
+        } else {
+            res.put("mistake", "empty LOGIN ");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+
+    }
+
+
+
+
+
+
     private boolean checkPassword(String login, String password) {
-        String pass;
         User user = getUser(login);
-        if(user!=null){
-            if(BCrypt.checkpw(password,user.getPassword()))
-                return true;
+        if (user != null) {
+
+            return BCrypt.checkpw(password, user.getPassword());
         }
         return false;
     }
