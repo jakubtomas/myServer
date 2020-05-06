@@ -435,6 +435,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.GET, value = "/messages")
     public ResponseEntity<String> getMessages(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
+        System.out.println("messages without fname ");
 
         JSONObject obj = new JSONObject(data);
         JSONObject res = new JSONObject();
@@ -453,10 +454,8 @@ public class UserController {
                 res.put("from", obj.getString("login"));
 
 
-
                 //  put messages into json
                 for(int i = 0; i < messages.size(); i++) {
-
                     res.put("message " + i, messages.get(i));
                     System.out.print(messages.get(i));
                 }
@@ -477,7 +476,53 @@ public class UserController {
     }
 
 
+    // message only FROM ivana this message which send me sender
+    @RequestMapping(method = RequestMethod.GET, value = "/messages/{from}")  //localhost:8080/messages?from=ivana
+    public ResponseEntity<String> getMessage(@RequestParam(value = "from") String from, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
+        System.out.println("messages with from");
+
+      //  JSONObject obj = new JSONObject(data);
+        JSONObject res = new JSONObject();
+
+        User temp = getUser(from);
+
+        if (temp == null  || !validToken(token) ) { // check we have user and check the token
+            res.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
+
+        if (existLogin(from)) {
+            // return messages only with from no all messages
+            System.out.println("your from is " + from);
+            return null;
+        } else {
+            // todo change return empty json
+            System.out.println("user dosnt exist ");
+            res.put("error", " input from do not exist in our database/ list ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+
+        }
+
+    }
+
+
+/////////////////////// DELETE ACCOUNT   vytvorit DELETE request localhost:8080/delete/login
+
+@RequestMapping(method = RequestMethod.GET, value = "/delete/login")
+public ResponseEntity<String> deleteAccount( @RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
+
+    return null;
+
+}
+
+
+
+
+
+    /*vytvorit PATCH request localhost:8080/update/login
+pricom login bude nase meno, header ma token.
+v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip obe)*/
 
 
 

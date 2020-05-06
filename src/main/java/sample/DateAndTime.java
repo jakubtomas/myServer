@@ -80,6 +80,7 @@ public class DateAndTime {
     @RequestMapping("/hi") // GET method default
     public String getHi(@RequestParam(value = "fname") String fname, @RequestParam(value = "age") String age) {
         return "Hello. How are you? Your name is " + fname + " and you are " + age;
+
     }
     // todo and also Generate token
     // todo compare the password if is ok return object json with all data fName lastn name and so on
