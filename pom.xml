@@ -11,6 +11,7 @@
     <properties>
         <maven.compiler.source>1.11</maven.compiler.source>
         <maven.compiler.target>1.11</maven.compiler.target>
+        <mongo.complier-plugin.version>2.12.3</mongo.complier-plugin.version>
     </properties>
 
 
@@ -42,8 +43,14 @@
             <version>RELEASE</version>
         </dependency>
 
-
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.0</version>
+        </dependency>
     </dependencies>
+
+
 
 
 
