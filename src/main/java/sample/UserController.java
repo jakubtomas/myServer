@@ -46,7 +46,7 @@ public class UserController {
     ///////////////////////////////////////////
     // SIGN UP
 
-
+        // input user registration
     @RequestMapping(method = RequestMethod.POST, value = "/signup")
     public ResponseEntity<String> signup(@RequestBody String data) throws JSONException { // input data from body html page
 
@@ -89,8 +89,13 @@ public class UserController {
             res.put("fname", objj.getString("fname"));  // put message
             res.put("lname", objj.getString("lname"));
             res.put("login", objj.getString("login"));
+            res.put("password", objj.getString("password"));
 
-            System.out.println("Succesf");
+
+            Database db = new Database();  // create database
+            db.insertUser(res);             // send JSON data
+
+            System.out.println("Successfully created new account and save in database ");
 
             return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString()); // to string json data
 
@@ -333,13 +338,13 @@ public class UserController {
     /// Log with parameter and return values according to input value
     // todo  dokoncit
     //pridat moznost volitelneho parametra localhost:8080/log?type=logout
-    @RequestMapping(value = "/log")
+/*    @RequestMapping(value = "/log")
     public ResponseEntity<String> gethistory(@RequestParam(value = "type") String type, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
 
 
         return null;
-    }
+    }*/
 
 
 
