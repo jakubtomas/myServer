@@ -25,7 +25,8 @@ public class UserController {
     public UserController() {
         list.add(new User("peter", "sagan", "sagan", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
         list.add(new User("veronika", "veronika", "veronika", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
-/*
+
+        /*
         list.add(new User("peter", "juliana", "juliana", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
         list.add(new User("peter", "dog", "Dog", "$2a$08$pwyuZ84u7Qp2P.vFHS5vZ.ei2brZdqWY3NiUycbhY0tJgYCnpFaEG"));
 */
@@ -34,14 +35,16 @@ public class UserController {
 
 
     // check all users than someone has equals token
-    public boolean validToken(String token) {
-        for (User useri : list)
-            if (useri.getToken() != null && useri.getToken().equals(token))
-                return true;
-
-        return false;
+    public boolean validToken(String token , String user) {
+        return token.equals(user);
     }
 
+    /*
+    *  Database database = new Database();
+
+        JSONObject userJsonObject = database.getUser(login);
+
+        System.out.println("userJsonobject " + userJsonObject);*/
 
     ///////////////////////////////////////////
     // SIGN UP
@@ -53,17 +56,17 @@ public class UserController {
         System.out.println("input data are under");
         System.out.println(data);
 
-        JSONObject objj = new JSONObject(data);
+        JSONObject jsonObject = new JSONObject(data);
 
         // CHECK WE HAVE ALL DATA
-        if (objj.has("fname") && objj.has("lname") && objj.has("login") && objj.has("password")) {
+        if (jsonObject.has("fname") && jsonObject.has("lname") && jsonObject.has("login") && jsonObject.has("password")) {
 
             System.out.println("I have alll name "); // control  show data in console
             System.out.println(" I have all ");
 
 
             // CHECK  EXIST LOGIN
-            if (existLogin(objj.getString("login"))) {  // take login into function exist Login   return true or false
+            if (existLogin(jsonObject.getString("login"))) {  // take login into function exist Login   return true or false
                 JSONObject result = new JSONObject();          // create json object
                 result.put("error", "User already exists");         // put error message
                 return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(result.toString()); // to string okey
@@ -72,7 +75,7 @@ public class UserController {
 
 
             //CHECK  PASSWORD IS EMPTY
-            String password = objj.getString("password");
+            String password = jsonObject.getString("password");
             if (password.isEmpty()) {
                 JSONObject result = new JSONObject();
 
@@ -81,15 +84,15 @@ public class UserController {
 
             }
 
-            String hashPass = hash(objj.getString("password")); // create hash
+            String hashPass = hash(jsonObject.getString("password")); // create hash
 
-            User user = new User(objj.getString("fname"), objj.getString("lname"), objj.getString("login"), hashPass);
+            User user = new User(jsonObject.getString("fname"), jsonObject.getString("lname"), jsonObject.getString("login"), hashPass);
             list.add(user);
             JSONObject res = new JSONObject(); // create json
-            res.put("fname", objj.getString("fname"));  // put message
-            res.put("lname", objj.getString("lname"));
-            res.put("login", objj.getString("login"));
-            res.put("password", objj.getString("password"));
+            res.put("fname", jsonObject.getString("fname"));  // put message
+            res.put("lname", jsonObject.getString("lname"));
+            res.put("login", jsonObject.getString("login"));
+            res.put("password", hashPass);
 
 
             Database db = new Database();  // create database
@@ -114,12 +117,11 @@ public class UserController {
         //return null;
     }
 
-    private boolean existLogin(String login) {
-        for (User user : list) {
-            if (user.getLogin().equalsIgnoreCase(login))
-                return true;
-        }
-        return false;
+    private boolean existLogin(String login) throws JSONException {
+        Database database = new Database();
+        return  database.existLogin(login);
+        // return true or false
+
     }
 
     public String hash(String password) {
@@ -130,12 +132,15 @@ public class UserController {
     ///////////////////////////////////////////
     /////   LOGIN
 
+//  login
+    // password
 
     @RequestMapping(method = RequestMethod.POST, value = "/login")
 
     public ResponseEntity<String> login(@RequestBody String credential) throws JSONException {
 
-        JSONObject obj = new JSONObject(credential);/*don't copy*/   // why
+
+        JSONObject jsonObject = new JSONObject(credential);  // why
 
         // time actually
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("ddMMyy HH:mm:ss");
@@ -144,31 +149,38 @@ public class UserController {
 
 
         //CHECK WE HAVE LOGIN AND PASSWORD
-        if (obj.has("login") && obj.has("password")) {
+        if (jsonObject.has("login") && jsonObject.has("password")) {
 
             JSONObject result = new JSONObject(); // CREATE NEW JSON OBJECT
             JSONObject logHistory = new JSONObject(); // CREATE NEW JSON OBJECT
 
             //check password and login that are empty
-            if (obj.getString("password").isEmpty() || obj.getString("login").isEmpty()) {
+            if (jsonObject.getString("password").isEmpty() || jsonObject.getString("login").isEmpty()) {
                 result.put("error", "Password and login are mandatory fields");
                 return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(result.toString());
             }
 
-            String hashInputpassword = hash(obj.getString("password")); // create hash
+            String hashInputPassword = hash(jsonObject.getString("password")); // create hash
 
-            System.out.println("your hash input password   " + hashInputpassword);
+            System.out.println("your hash input password   " + hashInputPassword);
 
 
             //check the existing the login and check password than is correct
-            if (existLogin(obj.getString("login")) && checkPassword(obj.getString("login"), obj.getString("password"))) {
+            if (existLogin(jsonObject.getString("login")) && checkPassword(jsonObject.getString("login"), jsonObject.getString("password"))) {
 
-                User loggedUser = getUser(obj.getString("login"));
+                User loggedUser = getUser(jsonObject.getString("login")) ; // create  user from login
+
 
                 if (loggedUser == null) {
                     // tento riadok by sa nemal nikdy vykonat, osetrene kvoli jave
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{}");
                 }
+
+                System.out.println("---                                         ----");
+                System.out.println("loggedUSer class name and fname " + loggedUser.getFname() );
+                System.out.println("loggedUSer class name and lname " + loggedUser.getLname() );
+                System.out.println("---                                         ----");
+
 
                 result.put("fname", loggedUser.getFname());
                 result.put("lname", loggedUser.getLname());
@@ -192,7 +204,7 @@ public class UserController {
 
 
                 result.put("token", token);
-                loggedUser.setToken(token);
+                loggedUser.setToken(token);  // set token
 
                 //   Strinng JSondatatime  = {"type":"logout","login":"martin5","datetime":"04052020 13:58:04"}
                 // better tocreate JSON object
@@ -217,26 +229,41 @@ public class UserController {
 
     //////////////   LOGOUT
 
-
+// login and token
     @RequestMapping(method = RequestMethod.POST, value = "/logout")
     public ResponseEntity<String> logout(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
-        JSONObject obj = new JSONObject(data);
 
-        String login = obj.getString("login");
-
+        JSONObject objectInput = new JSONObject(data);
+        String login = objectInput.getString("login");
 
         User user = getUser(login);
 
-        if (user != null && validToken(token)) {
+        if (user == null) {
+            System.out.println("user is null");
+        }
+        System.out.println("===============================================================");
+        System.out.println("==                                                            ==");
+        System.out.println("user is " + user);
+
+        System.out.println("validToken is " + validToken(token, user.getToken()));
+        System.out.println("token " + token);
+        System.out.println("userToken " + user.getToken());
+
+        System.out.println("===============================================================");
+        System.out.println("==                                                            ==");
+
+
+
+        if (user != null && validToken(token, user.getToken())) {
             user.setToken(null);
             return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{}");
         }
 
 
-        JSONObject res = new JSONObject();
-        res.put("error", "Incorrect login or token");
-        return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        JSONObject result = new JSONObject();
+        result.put("error", "Incorrect login or token");
+        return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
     }
 
 
@@ -253,40 +280,40 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST, value = "/changePassword")
     public ResponseEntity<String> changePassword(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
-        JSONObject obj = new JSONObject(data); // json from input data body
-        JSONObject res = new JSONObject();// result JSON
+        JSONObject inputJson = new JSONObject(data); // json from input data body
+        JSONObject resultJson = new JSONObject();//m result JSON
 
-        User temp = getUser(obj.getString("login")); // return object user according to login name
+        User temp = getUser(inputJson.getString("login")); // return object user according to login name
 
 
         if (temp == null) {
-            res.put("error", "Incorrect login");
-            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            resultJson.put("error", "Incorrect login");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
         }
 
         // check we have data like login old password and new password
 
-        if (obj.has("login") && obj.has("oldpassword") && obj.has("newpassword")) {
+        if (inputJson.has("login") && inputJson.has("oldpassword") && inputJson.has("newpassword")) {
 
-            System.out.println(obj.getString("oldpassword"));
+            System.out.println(inputJson.getString("oldpassword"));
 
-            if (temp.getLogin().equals(obj.getString("login")) && BCrypt.checkpw(obj.getString("oldpassword"), temp.getPassword())
+            if (temp.getLogin().equals(inputJson.getString("login")) && BCrypt.checkpw(inputJson.getString("oldpassword"), temp.getPassword())
                     && temp.getToken().equals(token)) {
 
-                System.out.println("change  passwrod to " + obj.getString("newpassword"));
+                System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
 
                 // better to add return 200 with body message success
-                temp.setPassword(obj.getString("newpassword"));
+                temp.setPassword(inputJson.getString("newpassword"));
 
 
             } else {
-                res.put("error", "Wrong password or token");
-                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+                resultJson.put("error", "Wrong password or token");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
             }
 
         } else
-            res.put("error", "Wrong input");
-        return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            resultJson.put("error", "Wrong input");
+        return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
 
     }
 
@@ -303,10 +330,10 @@ public class UserController {
         JSONObject obj = new JSONObject(data);
         JSONObject res = new JSONObject();
 
-        User temp = getUser(obj.getString("login"));
+        User userObject = getUser(obj.getString("login"));
 
 
-        if (temp == null || !validToken(token)) { // check we have user and check the token
+        if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
             res.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
         }
@@ -349,15 +376,20 @@ public class UserController {
 
 
 
+   /// request parameter
 
 
     @RequestMapping("/users") // get users according to token ??
-    public ResponseEntity<String> getUsers(@RequestParam(value = "token") String token) throws JSONException {
+    public ResponseEntity<String> getUsers(@RequestParam(value = "token") String token, @RequestHeader(name = "From,") String From ) throws JSONException {
+
+        //JSONObject obj = new JSONObject(data);
+        User userObject = getUser(From);
+
 
         if (token == null) {
             return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{\"error\",\"Bad request\"}");
         }
-        if (validToken(token)) {
+        if (validToken(token,userObject.getToken())) {
             JSONArray array = new JSONArray();
             for (User user : list) {
                 JSONObject obj = new JSONObject();
@@ -380,47 +412,51 @@ public class UserController {
     public ResponseEntity<String> sendMessage(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
 
-        JSONObject obj = new JSONObject(data);
-        JSONObject res = new JSONObject();
+        JSONObject jsonObject = new JSONObject(data);
+        JSONObject jsonResult = new JSONObject();
 
-        User temp = getUser(obj.getString("from"));
+        User userObject = getUser(jsonObject.getString("from"));
 
-        if (temp == null || !validToken(token)) { // check we have user and check the token
-            res.put("error", "Incorrect login or invalid TOKEN ");
-            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
+            jsonResult.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(jsonResult.toString());
         }
 
-        if (obj.has("from") && obj.has("message") && obj.has("to")) {
+        if (jsonObject.has("from") && jsonObject.has("message") && jsonObject.has("to")) {
 
-            if (existLogin(obj.getString("from")) && existLogin(obj.getString("to"))) {
+            if (existLogin(jsonObject.getString("from")) && existLogin(jsonObject.getString("to"))) {
                 // json add into array list
-                res.put("from", obj.getString("from"));   // sender
-                res.put("message", obj.getString("message"));   // message
-                res.put("to", obj.getString("to"));   // acceptor
+                jsonResult.put("from", jsonObject.getString("from"));   // sender
+                jsonResult.put("message", jsonObject.getString("message"));   // message
+                jsonResult.put("to", jsonObject.getString("to"));   // acceptor
 
 
-                System.out.println("message" + res.toString());
+                System.out.println("message" + jsonResult.toString());
                 JSONArray jsonArray = new JSONArray();
-                jsonArray.put(res);
+                jsonArray.put(jsonResult);
 
                 System.out.println("jsonarray is  " + jsonArray);
-                messages.add(res.toString());
+                messages.add(jsonResult.toString());
 
 
-                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(jsonResult.toString());
 
 
             } else {
-                res.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
-                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+                jsonResult.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(jsonResult.toString());
             }
         } else {
-            res.put("mistake", "empty message or acceptor or login sender ");
-            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            jsonResult.put("mistake", "empty message or acceptor or login sender ");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(jsonResult.toString());
         }
 
 
     }
+
+
+
+
 
 /////////////////////////////////////// GET MESSAGES
 
@@ -429,40 +465,40 @@ public class UserController {
 
         System.out.println("messages without fname ");
 
-        JSONObject obj = new JSONObject(data);
-        JSONObject res = new JSONObject();
+        JSONObject inputData = new JSONObject(data);
+        JSONObject ResultJson = new JSONObject();
 
-        User temp = getUser(obj.getString("login"));
+        User userObject = getUser(inputData.getString("login"));
 
 
-        if (temp == null || !validToken(token)) { // check we have user and check the token
-            res.put("error", "Incorrect login or invalid TOKEN ");
-            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
+            ResultJson.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(ResultJson.toString());
         }
 
-        if (obj.has("login")) {
+        if (inputData.has("login")) {
 
-            if (existLogin(obj.getString("login"))) {
+            if (existLogin(inputData.getString("login"))) {
                 // json add into array list
-                res.put("from", obj.getString("login"));
+                ResultJson.put("from", inputData.getString("login"));
 
 
                 //  put messages into json
                 for (int i = 0; i < messages.size(); i++) {
-                    res.put("message " + i, messages.get(i));
+                    ResultJson.put("message " + i, messages.get(i));
                     System.out.print(messages.get(i));
                 }
 
-                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(ResultJson.toString());
 
 
             } else {
-                res.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
-                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+                ResultJson.put("error", "Acceptor or sender  dosnt exist in our database / list  ");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(ResultJson.toString());
             }
         } else {
-            res.put("mistake", "empty LOGIN ");
-            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            ResultJson.put("mistake", "empty LOGIN ");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(ResultJson.toString());
         }
 
 
@@ -477,13 +513,13 @@ public class UserController {
         System.out.println("messages with from");
 
         //  JSONObject obj = new JSONObject(data);
-        JSONObject res = new JSONObject();
+        JSONObject resultJson = new JSONObject();
 
-        User temp = getUser(from);
+        User userObject = getUser(from);
 
-        if (temp == null || !validToken(token)) { // check we have user and check the token
-            res.put("error", "Incorrect login or invalid TOKEN ");
-            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
+            resultJson.put("error", "Incorrect login or invalid TOKEN ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
         }
 
         if (existLogin(from)) {
@@ -493,8 +529,8 @@ public class UserController {
         } else {
             // todo change return empty json
             System.out.println("user dosnt exist ");
-            res.put("error", " input from do not exist in our database/ list ");
-            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+            resultJson.put("error", " input from do not exist in our database/ list ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
 
         }
 
@@ -517,7 +553,7 @@ public class UserController {
         System.out.println("delete/login" + login);
 
 
-        if (user == null || !validToken(token)) { // check we have user and check the token
+        if (user == null || !validToken(token,user.getToken())) { // check we have user and check the token
             result.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
         } else {
@@ -571,7 +607,7 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
         // I have fname
 
 
-        if (user == null || !validToken(token)) { // check we have user and check the token
+        if (user == null || !validToken(token,user.getToken())) { // check we have user and check the token
             result.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
         } else {
@@ -619,9 +655,13 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
     }
 
 
-    private boolean checkPassword(String login, String password) {
+    public boolean checkPassword(String login, String password) throws JSONException {
+
         User user = getUser(login);
         if (user != null) {
+            System.out.println("---                                             ----");
+            System.out.println("password function check password is " + user.getPassword());
+            System.out.println("---                                             ----");
 
             return BCrypt.checkpw(password, user.getPassword());
         }
@@ -654,13 +694,29 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
 
         }*/
 
-    private User getUser(String login) {
+/*    private User getUser(String login) {
         for (User user : list) {
             if (user.getLogin().equals(login))
                 return user;
         }
         return null;
-    }
+    }*/
 
+
+    private User getUser(String login) throws JSONException {
+        Database database = new Database();
+
+        JSONObject userJsonObject = database.getUser(login);
+
+        System.out.println("userJsonobject " + userJsonObject);
+
+        //create new user
+
+        return new User(userJsonObject.getString("fname"),
+                userJsonObject.getString("lname"),
+                userJsonObject.getString("login"),
+                userJsonObject.getString("password"));
+
+    }
 
 }

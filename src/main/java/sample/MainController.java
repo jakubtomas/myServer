@@ -17,8 +17,24 @@ public class  MainController {
         //database1.inputUser();
 
         Database database = new Database();
+        database.getUser("janko");
+
+        System.out.println("Json object" + database.getUser("janko"));
         JSONObject res = new JSONObject();
-/*
+        //System.out.println("Find login  janko " + database.findLogin("peter"));;
+        //database.skuska1();
+
+
+        System.out.println("---                                                                  ----");
+        System.out.println("DO YOU HAVE VALUE LIENKA IN DATABASE "+  database.existLogin("medulienka"));;
+        System.out.println("DO YOU HAVE VALUE LIENKA IN DATABASE "+  database.existLogin("medulienka"));;
+        System.out.println("DO YOU HAVE VALUE sagan IN DATABASE "+  database.existLogin("sagan"));;
+        System.out.println("---                                                                  ----");
+
+        UserController userController = new UserController();
+
+       // userController.checkPassword()
+        /*
 
         res.put("fname", "fname pridavam");  // put message
         res.put("lname", "lname try to send");
@@ -26,7 +42,11 @@ public class  MainController {
 
 
         database.insertUser(res);
+
+
 */
+
+
 
     }
 }
