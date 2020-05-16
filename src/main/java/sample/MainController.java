@@ -19,6 +19,8 @@ public class  MainController {
         Database database = new Database();
         database.getUser("janko");
 
+       // database.updateuser();
+
         System.out.println("Json object" + database.getUser("janko"));
         JSONObject res = new JSONObject();
         //System.out.println("Find login  janko " + database.findLogin("peter"));;

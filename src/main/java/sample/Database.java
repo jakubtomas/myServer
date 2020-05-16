@@ -4,6 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -71,6 +72,26 @@ public class Database {
         }
 
 
+
+    }
+
+    public void saveToken(String login, String token) {
+        System.out.println("                                            save token into database ");
+        Bson updateQuery=new Document("login",login );
+        Bson newValue=new Document("token", token);
+        Bson update=new Document("$set", newValue);
+        collectionUsers.updateOne(updateQuery, update);
+    }
+
+
+    public void  updateuser() {
+        // crete new document
+
+        System.out.println("                                            generate token");
+        Bson updateQuery=new Document("login", "asus1");
+        Bson newValue=new Document("token", "generateToken");
+        Bson update=new Document("$set", newValue);
+        collectionUsers.updateOne(updateQuery, update);
 
     }
 

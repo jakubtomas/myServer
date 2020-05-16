@@ -132,7 +132,7 @@ public class UserController {
     ///////////////////////////////////////////
     /////   LOGIN
 
-//  login
+    //  login
     // password
 
     @RequestMapping(method = RequestMethod.POST, value = "/login")
@@ -205,6 +205,21 @@ public class UserController {
 
                 result.put("token", token);
                 loggedUser.setToken(token);  // set token
+
+                Database database = new Database();
+
+                System.out.println("show me the login name " + jsonObject.getString("login"));
+
+
+
+                /// also sent the token
+                database.saveToken(jsonObject.getString("login"),token);
+
+
+
+                System.out.println("-- ..................TOKEN..................");
+                System.out.println("token is " + loggedUser.getToken());
+                System.out.println("-- ..................TOKEN..................");
 
                 //   Strinng JSondatatime  = {"type":"logout","login":"martin5","datetime":"04052020 13:58:04"}
                 // better tocreate JSON object
