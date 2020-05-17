@@ -83,6 +83,43 @@ public class Database {
         collectionUsers.updateOne(updateQuery, update);
     }
 
+    public void saveLoginHistory(JSONObject jsonObject) throws JSONException {
+
+        Document document = new Document()
+                .append("type", jsonObject.getString("type"))
+                .append("login", jsonObject.getString("login"))
+                .append("datetime", jsonObject.getString("datetime"));
+
+
+        collectionMessages.insertOne(document);
+
+    }
+
+
+    public boolean existToken(String token ) throws JSONException {
+        Document found = collectionUsers.find(new Document("token", token)).first();
+
+        JSONObject user = new JSONObject(found);
+
+        if (found == null) {
+            return false;
+        } else {
+            System.out.println(user.getString("login"));
+            System.out.println(user.getString("token"));
+
+            return true;
+        }
+
+    }
+
+    public void deleteToken(String login) {
+
+        Bson updateQuery=new Document("login", login);
+        Bson newValue=new Document("token", "");
+        Bson update=new Document("$set", newValue);
+        collectionUsers.updateOne(updateQuery, update);
+    }
+
 
     public void  updateuser() {
         // crete new document

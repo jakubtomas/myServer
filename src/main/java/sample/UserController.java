@@ -190,7 +190,7 @@ public class UserController {
                 // put data into json object
                 logHistory.put("type", "login");
                 logHistory.put("login", loggedUser.getLogin());
-                logHistory.put("datetime", loggedUser.getLogin());
+                logHistory.put("datetime", time);
 
                 System.out.println("history" + logHistory);
                 // Generate new token
@@ -206,14 +206,19 @@ public class UserController {
                 result.put("token", token);
                 loggedUser.setToken(token);  // set token
 
+
+                // save token into database
                 Database database = new Database();
+                database.saveToken(jsonObject.getString("login"),token);
+
+                //save login history into database
+                database.saveLoginHistory(logHistory);
 
                 System.out.println("show me the login name " + jsonObject.getString("login"));
 
 
 
                 /// also sent the token
-                database.saveToken(jsonObject.getString("login"),token);
 
 
 
@@ -250,12 +255,17 @@ public class UserController {
 
 
         JSONObject objectInput = new JSONObject(data);
+        JSONObject result = new JSONObject();
         String login = objectInput.getString("login");
 
         User user = getUser(login);
 
-        if (user == null) {
+        if (user.getFname() == null) {
             System.out.println("user is null");
+
+            result.put("error", "Login do not exist in our database");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
+
         }
         System.out.println("===============================================================");
         System.out.println("==                                                            ==");
@@ -269,14 +279,22 @@ public class UserController {
         System.out.println("==                                                            ==");
 
 
+        // create database
+        Database database = new Database();
 
-        if (user != null && validToken(token, user.getToken())) {
-            user.setToken(null);
-            return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{}");
+        if (user.getFname() != null && database.existLogin(objectInput.getString("login"))) {
+
+            if (database.existToken(token)) {
+                database.deleteToken(objectInput.getString("login"));
+
+                user.setToken(null);
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{}");
+            }
+
         }
 
 
-        JSONObject result = new JSONObject();
+
         result.put("error", "Incorrect login or token");
         return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
     }
@@ -298,10 +316,10 @@ public class UserController {
         JSONObject inputJson = new JSONObject(data); // json from input data body
         JSONObject resultJson = new JSONObject();//m result JSON
 
-        User temp = getUser(inputJson.getString("login")); // return object user according to login name
+        User user = getUser(inputJson.getString("login")); // return object user according to login name
 
-
-        if (temp == null) {
+        // check user we have in database t
+        if (user.getFname() == null) {
             resultJson.put("error", "Incorrect login");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
         }
@@ -312,13 +330,27 @@ public class UserController {
 
             System.out.println(inputJson.getString("oldpassword"));
 
-            if (temp.getLogin().equals(inputJson.getString("login")) && BCrypt.checkpw(inputJson.getString("oldpassword"), temp.getPassword())
-                    && temp.getToken().equals(token)) {
 
-                System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
+            // check the token
 
-                // better to add return 200 with body message success
-                temp.setPassword(inputJson.getString("newpassword"));
+
+
+            if (user.getLogin().equals(inputJson.getString("login")) &&
+                    BCrypt.checkpw(inputJson.getString("oldpassword"), user.getPassword())) {
+
+                Database database = new Database();
+
+                if (database.existToken(token)) {
+
+                    System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
+
+                    // better to add return 200 with body message success
+                    user.setPassword(inputJson.getString("newpassword"));
+                    ///  update into database  create
+
+
+
+                }
 
 
             } else {
@@ -733,5 +765,6 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
                 userJsonObject.getString("password"));
 
     }
+
 
 }
