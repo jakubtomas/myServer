@@ -8,15 +8,22 @@ import org.bson.conversions.Bson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Database {
     private MongoClient mongo = new MongoClient("localhost", 27017);
     private MongoDatabase database = mongo.getDatabase("javaServer");
 
     private MongoCollection<Document> collectionUsers = database.getCollection("users");
-    private MongoCollection<Document> collectionLogs = database.getCollection("log");
+    private MongoCollection<Document> collectionLogs = database.getCollection("loginHistory");
     private MongoCollection<Document> collectionMessages = database.getCollection("messages");
 
 
+    public void closeDatabase() {
+        this.mongo = null;
+        this.database = null;
+    }
     public void insertUser(JSONObject jsonObject) throws JSONException {
 
         Document document = new Document()
@@ -32,6 +39,20 @@ public class Database {
         System.out.println("=================================");
     }
 
+    public void insertMessage(JSONObject jsonObject) throws JSONException {
+
+        Document document = new Document()
+                .append("from", jsonObject.getString("from"))
+                .append("message", jsonObject.getString("message"))
+                .append("to", jsonObject.getString("to"))
+                .append("datetime", jsonObject.getString("datetime"));
+
+        collectionMessages.insertOne(document);
+
+        System.out.println("=================================");
+        System.out.println("INSERT into database okey ");
+        System.out.println("=================================");
+    }
 
 
     public boolean existLogin(String login) throws JSONException {
@@ -74,6 +95,83 @@ public class Database {
 
 
     }
+/*
+    public JSONObject getLoginHistory(String login) throws JSONException {
+        Document found = collectionLogs.find(new Document("login", login)).first();
+        JSONObject loginObject = new JSONObject(found);
+
+        ArrayList<String> listdata = new ArrayList<>();
+
+
+
+        if (found == null) {
+            System.out.println(" WE DONT HAVE VALUE");
+
+            return null; //  dos not exist record
+        } else {
+
+            System.out.println("get login from json  === " + loginObject.getString("login") + " ===");
+            System.out.println("we HAVE VALUE IN OUR DATABASE ");
+            return loginObject;
+        }
+
+    }
+    */
+
+
+    public List<String> getLoginHistory(String login ) throws JSONException {
+
+        List<String> loginHistory = new ArrayList<>();
+
+        for (Document document : collectionLogs.find()) {
+            JSONObject object = new JSONObject(document.toJson());  // document to json
+            if (object.getString("login").equals(login)) {
+                loginHistory.add(object.toString());
+            }
+        }
+        return loginHistory;
+    }
+
+    // todo list this function you have to change only my messages no all message this is bad mistake
+    public List<String> getAllMessages( ) throws JSONException {
+
+        List<String> loginHistory = new ArrayList<>();
+
+        for (Document document : collectionLogs.find()) {
+            JSONObject object = new JSONObject(document.toJson());  // document to json
+
+
+            loginHistory.add(object.toString());
+
+        }
+        return loginHistory;
+    }
+
+    public List<String> getUsers() throws JSONException {
+
+        List<String> usersList = new ArrayList<>();
+
+        for (Document document : collectionUsers.find()) {
+            JSONObject object = new JSONObject(document.toJson());  // document to json
+
+
+            usersList.add(object.getString("login"));
+        }
+        return usersList;
+    }
+
+       /* public List<String> getMessages() throws JSONException {
+
+            List<String> messagesList = new ArrayList<>();
+
+            for (Document document : collectionMessages.find()) {
+                JSONObject object = new JSONObject(document.toJson());  // document to json
+
+                messagesList.add(object.toString());
+            }
+            return messagesList;
+        }*/
+
 
     public void saveToken(String login, String token) {
         System.out.println("                                            save token into database ");
@@ -91,7 +189,7 @@ public class Database {
                 .append("datetime", jsonObject.getString("datetime"));
 
 
-        collectionMessages.insertOne(document);
+        collectionLogs.insertOne(document);
 
     }
 
@@ -120,6 +218,16 @@ public class Database {
         collectionUsers.updateOne(updateQuery, update);
     }
 
+
+    public void  updatePassword(String login, String hash) {
+        // crete new document
+
+        Bson updateQuery=new Document("login", login);
+        Bson newValue=new Document("password", hash);
+        Bson update=new Document("$set", newValue);
+        collectionUsers.updateOne(updateQuery, update);
+
+    }
 
     public void  updateuser() {
         // crete new document
