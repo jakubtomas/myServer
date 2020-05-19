@@ -30,7 +30,8 @@ public class Database {
                 .append("fname", jsonObject.getString("fname"))
                 .append("lname", jsonObject.getString("lname"))
                 .append("login", jsonObject.getString("login"))
-                .append("password", jsonObject.getString("password"));
+                .append("password", jsonObject.getString("password"))
+                .append("token", jsonObject.getString("token"));
 
         collectionUsers.insertOne(document);
 
@@ -232,7 +233,7 @@ public class Database {
     public void  updateuser() {
         // crete new document
 
-        System.out.println("                                            generate token");
+       // System.out.println("                                            generate token");
         Bson updateQuery=new Document("login", "asus1");
         Bson newValue=new Document("token", "generateToken");
         Bson update=new Document("$set", newValue);
@@ -466,23 +467,4 @@ public class Database {
 
 
 
-    public void  skuska1() throws JSONException {
-
-        System.out.println("function skuska1 ");
-        System.out.println("");
-       Document found = collectionUsers.find(new Document("login", "janko")).first();
-
-
-        System.out.println("found is " + found);
-        System.out.println("found is " + found.toString());
-
-
-        JSONObject object = new JSONObject(found);
-        System.out.println("get login from json " + object.getString("login"));
-
-        if (found != null) {
-          //return;
-            System.out.println("yes we have data ");
-        }
-    }
 }

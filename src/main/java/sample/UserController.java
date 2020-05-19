@@ -93,6 +93,7 @@ public class UserController {
             res.put("lname", jsonObject.getString("lname"));
             res.put("login", jsonObject.getString("login"));
             res.put("password", hashPass);
+            res.put("token", "");
 
 
             Database db = new Database();  // create database
@@ -635,9 +636,11 @@ public class UserController {
 // todo potrebne dokncit
     @RequestMapping(method = RequestMethod.DELETE, value = "/delete/{login}")
     public ResponseEntity<String> deleteAccount(@PathVariable String login, @RequestHeader(name = "Authorization") String token) throws JSONException {
-// login your name
+        // login your name
         // body data are empty
         //check the token
+
+
         User user = getUser(login);
         JSONObject result = new JSONObject();
         JSONObject jsonObject;
@@ -655,14 +658,22 @@ public class UserController {
             // check the login exist
             if (existLogin(login)) {
                 //delete from array list
-                for (int i = 0; i < list.size(); i++) {
+
+
+                database.deleteUser(user.getLogin(),token);
+                result.put("message", "Login delete successfully");
+
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(result.toString());
+
+
+                /*for (int i = 0; i < list.size(); i++) {
                     jsonObject = new JSONObject(list.get(i));
                     if (jsonObject.getString("from").equals(login)) {
                         list.remove(list.get(i));
                     } else {
 
                     }
-                }
+                }*/
 
 
             } else {
@@ -670,7 +681,7 @@ public class UserController {
                 return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
             }
         }
-        return null;
+       // return null;
 
     }
 
