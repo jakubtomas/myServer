@@ -283,7 +283,7 @@ public class UserController {
 
         if (user.getFname() != null && database.existLogin(objectInput.getString("login"))) {
 
-            if (database.existToken(token)) {
+            if (database.existToken(token,user.getLogin())) {
                 database.deleteToken(objectInput.getString("login"));
 
                 user.setToken(null);
@@ -339,7 +339,7 @@ public class UserController {
 
 
                 Database database = new Database();
-                if (database.existToken(token)) {
+                if (database.existToken(token,user.getLogin())) {
 
 
 
@@ -398,7 +398,7 @@ public class UserController {
                 // res.put("message", "everythink is okey ");
 
                 Database database = new Database();
-                if (database.existToken(token)) {
+                if (database.existToken(token, userObject.getLogin())) {
 
                     //JSONObject loginHistory = database.getLoginHistory(obj.getString("login"));
 
@@ -466,7 +466,7 @@ public class UserController {
             return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{\"error\",\"Bad request 123\"}");
         }
         Database database = new Database();
-        if (existLogin(From) && database.existToken(token ) ) {
+        if (existLogin(From) && database.existToken(token ,userObject.getLogin()) ) {
 
             List<String> users = database.getUsers();
 
@@ -495,7 +495,7 @@ public class UserController {
 
         Database database = new Database();
 
-        if (userObject.getLname() == null || !database.existToken(token)) { // check we have user and check the token
+        if (userObject.getLname() == null || !database.existToken(token,userObject.getLogin())) { // check we have user and check the token
             jsonResult.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(jsonResult.toString());
         }
@@ -559,7 +559,7 @@ public class UserController {
         Database database = new Database();
 
 
-        if (userObject.getLogin() == null || !database.existToken(token)) { // check we have user and check the token
+        if (userObject.getLogin() == null || !database.existToken(token,userObject.getLogin())) { // check we have user and check the token
 
             ResultJson.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(ResultJson.toString());
@@ -610,7 +610,7 @@ public class UserController {
         //  JSONObject obj = new JSONObject(data);
         JSONObject resultJson = new JSONObject();
 
-        User userObject = getUser(from);
+        User userObject = getUser(myLogin);
 
         if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
             resultJson.put("error", "Incorrect login or invalid TOKEN ");
@@ -711,8 +711,10 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
 
         // I have fname
 
+        Database database = new Database();
 
-        if (user == null || !validToken(token,user.getToken())) { // check we have user and check the token
+
+        if (user == null || !database.existToken(token,user.getLogin())) { // check we have user and check the token
             result.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
         } else {
@@ -735,10 +737,17 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
 
                     // I have fname and also lname
                 } else if (bodyData.has("fname") && bodyData.has("lname")) {// I have fname and login
-                    user.setFname(bodyData.getString("fname"));
-                    user.setLname(bodyData.getString("lname"));
 
                     result.put("message", "Fname and L name successfully changed");
+
+
+                    // input parameter  fname lname
+
+                    System.out.println("body data fname  " + bodyData.getString("fname") + "body data getString lname " + bodyData.getString("lname"));
+
+                  database.updateuser( bodyData.getString("fname") ,  bodyData.getString("lname"),bodyData.getString("login"));
+                    database.closeDatabase();
+
                     //return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(result.toString());
 
                 } else { // I do not have fname and lname what is problem
@@ -763,7 +772,7 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
     public boolean checkPassword(String login, String password) throws JSONException {
 
         User user = getUser(login);
-        if (user != null) {
+        if (user.getLogin() != null) {
             System.out.println("---                                             ----");
             System.out.println("password function check password is " + user.getPassword());
             System.out.println("---                                             ----");
@@ -788,14 +797,21 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
 
         JSONObject userJsonObject = database.getUser(login);
 
-        System.out.println("userJsonobject " + userJsonObject);
+        if (userJsonObject != null) {
 
-        //create new user
 
-        return new User(userJsonObject.getString("fname"),
-                userJsonObject.getString("lname"),
-                userJsonObject.getString("login"),
-                userJsonObject.getString("password"));
+            System.out.println("userJsonobject " + userJsonObject);
+
+            //create new user
+
+            return new User(userJsonObject.getString("fname"),
+                    userJsonObject.getString("lname"),
+                    userJsonObject.getString("login"),
+                    userJsonObject.getString("password"));
+        } else {
+            return null;
+        }
+
 
     }
 
@@ -806,5 +822,7 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
         String time;
         return time = dtf.format(localTime);
     }
+
+
 
 }

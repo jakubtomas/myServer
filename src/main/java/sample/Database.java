@@ -2,6 +2,7 @@ package sample;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -195,7 +196,8 @@ public class Database {
     }
 
 
-    public boolean existToken(String token ) throws JSONException {
+    // my function
+    /*public boolean existToken(String token ) throws JSONException {
         Document found = collectionUsers.find(new Document("token", token)).first();
 
         JSONObject user = new JSONObject(found);
@@ -209,7 +211,27 @@ public class Database {
             return true;
         }
 
+    }*/
+
+    public boolean existToken(String token, String login) throws JSONException {
+        try (MongoCursor<Document> cursor = collectionUsers.find().iterator()) {
+
+            System.out.println("input token "  + token);
+            System.out.println("input login "  + login);
+
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                JSONObject object = new JSONObject(doc.toJson());
+
+                System.out.println("login from object " + object.getString("login"));
+                if (object.getString("login").equals(login) && object.getString("token").equals(token)){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
+
 
     public void deleteToken(String login) {
 
@@ -233,12 +255,21 @@ public class Database {
     public void  updateuser() {
         // crete new document
 
-       // System.out.println("                                            generate token");
-        Bson updateQuery=new Document("login", "asus1");
-        Bson newValue=new Document("token", "generateToken");
-        Bson update=new Document("$set", newValue);
-        collectionUsers.updateOne(updateQuery, update);
 
+        System.out.println("string fname is " + fname + " lname is " + lname);
+
+        Bson filter = new Document("login", login) // na zaklade login
+                ;
+        Bson newValue = new Document("fname", fname).append("lname", lname);
+
+        Bson updateOperationDocument = new Document("$set", newValue);
+        collectionUsers.updateMany(filter, updateOperationDocument);
+
+
+        /*   Bson updateQuery=new Document("login", login);
+        Bson newValue=new Document("password", hash);
+        Bson update=new Document("$set", newValue);
+        collectionUsers.updateOne(updateQuery, update);*/
     }
 
 /*

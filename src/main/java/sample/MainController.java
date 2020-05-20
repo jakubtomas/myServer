@@ -19,6 +19,7 @@ public class  MainController {
         Database database = new Database();
         database.getUser("janko");
 
+      //  database.updateuser("again new asôldfkjasfôlkashdfnew fname " , "update new lname " , "user16");
        // database.updateuser();
 
         System.out.println("Json object" + database.getUser("janko"));
