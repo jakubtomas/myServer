@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
+@CrossOrigin(origins = {  "http://localhost:8081" })
 @RestController
 public class UserController {
     List<User> list = new ArrayList<User>();
@@ -76,6 +76,7 @@ public class UserController {
 
             //CHECK  PASSWORD IS EMPTY
             String password = jsonObject.getString("password");
+
             if (password.isEmpty()) {
                 JSONObject result = new JSONObject();
 
@@ -172,7 +173,7 @@ public class UserController {
 
                 if (loggedUser.getFname() == null) {
                     // tento riadok by sa nemal nikdy vykonat, osetrene kvoli jave
-                    return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{}");
+                    return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{empty fname }");
                 }
 
                 System.out.println("---                                         ----");
@@ -287,7 +288,7 @@ public class UserController {
                 database.deleteToken(objectInput.getString("login"));
 
                 user.setToken(null);
-                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{}");
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{Successfully logout}");
             }
 
         }
@@ -330,46 +331,43 @@ public class UserController {
             System.out.println(inputJson.getString("oldpassword"));
 
 
-            // check the token
-
-
-
             if (user.getLogin().equals(inputJson.getString("login")) &&
                     BCrypt.checkpw(inputJson.getString("oldpassword"), user.getPassword())) {
 
 
                 Database database = new Database();
-                if (database.existToken(token,user.getLogin())) {
-
+                if (database.existToken(token, user.getLogin())) {
 
 
                     System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
                     String hashPass = hash(inputJson.getString("newpassword")); // create hash
 
-                    database.updatePassword(inputJson.getString("login"),hashPass);
+                    database.updatePassword(inputJson.getString("login"), hashPass);
 
                     // better to add return 200 with body message success
                     user.setPassword(inputJson.getString("newpassword"));
                     ///  update into database  create
 
 
-                    return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{}");
+                    return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body("{\"message\": \"Successfully changed password \"}");
 
                 }
 
+                resultJson.put("error", "Wrong password or token");
+                return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
 
             } else {
                 resultJson.put("error", "Wrong password or token");
                 return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
             }
 
-        } else
+        } else {
             resultJson.put("error", "Wrong input");
-        return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
+
+        }
 
     }
-
-
 ///////////////////END
 
 
@@ -576,12 +574,6 @@ public class UserController {
                 List<String> messagesList = database.getAllMessages();
                 database.closeDatabase();
 
-                //  put messages into json
-                /*for (int i = 0; i < messages.size(); i++) {
-                    ResultJson.put("message " + i, messages.get(i));
-                    System.out.print(messages.get(i));
-                }*/
-
 
 
                 return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(messagesList.toString());
@@ -598,6 +590,41 @@ public class UserController {
 
 
     }
+
+
+    @RequestMapping(method = RequestMethod.POST, value = "/playground")
+    public ResponseEntity<String> playground() throws JSONException {
+
+        System.out.println("messages without fname ");
+
+       // JSONObject inputData = new JSONObject(data);
+        JSONObject ResultJson = new JSONObject();
+
+       // User userObject = getUser(inputData.getString("login"));
+
+        Database database = new Database();
+
+
+
+
+
+                List<String> messagesList = database.getAllMessages();
+                database.closeDatabase();
+
+                //  put messages into json
+                /*for (int i = 0; i < messages.size(); i++) {
+                    ResultJson.put("message " + i, messages.get(i));
+                    System.out.print(messages.get(i));
+                }*/
+
+
+
+                return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(messagesList.toString());
+
+
+
+    }
+
 
 
     //////////////////////////////////////////////////////////////////
@@ -693,19 +720,20 @@ public class UserController {
 pricom login bude nase meno, header ma token.
 v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip obe)*/
 
-    @RequestMapping(method = RequestMethod.PATCH, value = "/update/{login}")
-    public ResponseEntity<String> updateLogin(@PathVariable String login, @RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
+    @RequestMapping(method = RequestMethod.PATCH, value = "/update") // here
+    public ResponseEntity<String> updateLogin( @RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
-        User user = getUser(login);
 
-        System.out.println("temp " + user);
+       // System.out.println("temp " + user);
 
-        System.out.println("UPDATE/login " + login);
+        //System.out.println("UPDATE/login " + login);
 
 
         JSONObject bodyData = new JSONObject(data);
         JSONObject result = new JSONObject();
+        User user = getUser(bodyData.getString("login"));
 
+        String login = bodyData.getString("login");
         // pricom login bude nase meno, header ma token.
         //v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip obe)
 
@@ -739,6 +767,8 @@ v Body bude udaje co chceme zmenit, a to moze byt len fname alebo lname (prip ob
                 } else if (bodyData.has("fname") && bodyData.has("lname")) {// I have fname and login
 
                     result.put("message", "Fname and L name successfully changed");
+
+
 
 
                     // input parameter  fname lname

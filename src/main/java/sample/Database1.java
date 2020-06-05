@@ -21,7 +21,7 @@ public class Database1 {
     //mongodb://127.0.0.1:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
 
 
-    String Mongo = "mongodb://localhost:27017";
+    private String Mongo = "mongodb://localhost:27017";
 
     public void connectDatabase() {
         try (MongoClient mongoClient = MongoClients.create(Mongo)) {
@@ -46,6 +46,7 @@ public class Database1 {
                 .append("startInCompany", "10.2.2019");
 
         //insertOne
+
         collection.insertOne(doc);
     }
     public void runMongo() {

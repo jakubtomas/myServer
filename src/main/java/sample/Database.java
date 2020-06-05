@@ -223,8 +223,8 @@ public class Database {
                 Document doc = cursor.next();
                 JSONObject object = new JSONObject(doc.toJson());
 
-                System.out.println("login from object " + object.getString("login"));
                 if (object.getString("login").equals(login) && object.getString("token").equals(token)){
+                    System.out.println("login from object " + object.getString("login"));
                     return true;
                 }
             }
