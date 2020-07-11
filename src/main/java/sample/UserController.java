@@ -1,6 +1,7 @@
 package sample;
 
 
+import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -89,6 +90,7 @@ public class UserController {
 
             User user = new User(jsonObject.getString("fname"), jsonObject.getString("lname"), jsonObject.getString("login"), hashPass);
             list.add(user);
+
             JSONObject res = new JSONObject(); // create json
             res.put("fname", jsonObject.getString("fname"));  // put message
             res.put("lname", jsonObject.getString("lname"));
@@ -339,7 +341,7 @@ public class UserController {
                 if (database.existToken(token, user.getLogin())) {
 
 
-                    System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
+                  //  System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
                     String hashPass = hash(inputJson.getString("newpassword")); // create hash
 
                     database.updatePassword(inputJson.getString("login"), hashPass);
@@ -374,7 +376,7 @@ public class UserController {
 ////////////////////// LOG history my login
     // input json login : peter and into the header put the token
 
-    @RequestMapping(value = "/log")
+    @RequestMapping( value = "/log")
     public ResponseEntity<String> log(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
         JSONObject obj = new JSONObject(data);
@@ -448,6 +450,7 @@ public class UserController {
         JSONObject inputData = new JSONObject(data);
         String From = inputData.getString("login");
 
+        System.out.println("This is From  " + From);
 
         if (inputData.getString("login") != null) {
             System.out.println("We have From " + From);
@@ -455,20 +458,27 @@ public class UserController {
         //JSONObject obj = new JSONObject(data);
         User userObject = getUser(From);
 
-        if (userObject.getToken() == null) {
-            System.out.println("token is null ");
-        }
+
+//
+//        if (user == null || !database.existToken(token,user.getLogin())) { // check we have user and check the token
+//            result.put("error", "Incorrect login or invalid TOKEN ");
+//            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
+//
+
+
 
 
         if (token == null) {
-            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{\"error\",\"Bad request 123\"}");
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"Bad request 123\"}");
         }
         Database database = new Database();
         if (existLogin(From) && database.existToken(token ,userObject.getLogin()) ) {
 
             List<String> users = database.getUsers();
 
-            return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(users.toString());
+            String jsonUsers = new Gson().toJson(users);
+
+            return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(jsonUsers);
         } else
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"Invalid token\"}");
     }
@@ -544,7 +554,7 @@ public class UserController {
 
 /////////////////////////////////////// GET MESSAGES
 
-    @RequestMapping(method = RequestMethod.GET, value = "/messages")
+    @RequestMapping(method = RequestMethod.GET, value = "/allmessages")
     public ResponseEntity<String> getMessages(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
         System.out.println("messages without fname ");
@@ -592,8 +602,10 @@ public class UserController {
     }
 
 
-    @RequestMapping(method = RequestMethod.POST, value = "/playground")
-    public ResponseEntity<String> playground() throws JSONException {
+//    @RequestMapping(method = RequestMethod.POST, value = "/playground")
+@RequestMapping( value = "/playground")
+
+public ResponseEntity<String> playground() throws JSONException {
 
         System.out.println("messages without fname ");
 
@@ -629,25 +641,47 @@ public class UserController {
 
     //////////////////////////////////////////////////////////////////
     // message only FROM ivana this message which send me sender
-    @RequestMapping(method = RequestMethod.GET, value = "/messages/{from}")  //localhost:8080/messages?from=ivana
-    public ResponseEntity<String> getMessage(@PathVariable String from, @RequestHeader(name = "Authorization") String token) throws JSONException {
+    @RequestMapping( method = RequestMethod.POST,value = "/messages")  //localhost:8080/messages?from=ivana
+    public ResponseEntity<String> getMessage(@RequestBody String data , @RequestHeader(name = "Authorization") String token) throws JSONException {
 
-        System.out.println("messages with from");
+       // System.out.println("message from  " + from + "  space  my login " + myLogin);
+            // from
+        // myLogin
+
+
 
         //  JSONObject obj = new JSONObject(data);
         JSONObject resultJson = new JSONObject();
+        JSONObject inputData = new JSONObject(data);
 
-        User userObject = getUser(myLogin);
 
-        if (userObject == null || !validToken(token, userObject.getToken())) { // check we have user and check the token
+
+        //User userObject = getUser(myLogin);
+        User userObject = getUser(inputData.getString("myLogin"));
+
+
+        Database database = new Database();
+
+       // System.out.println("user object .geLogin  is "  + userObject.getLogin());
+
+        //System.out.println(" vypis podmienky " + database.existToken(token, userObject.getLogin()));
+        if (userObject == null || !database.existToken(token,userObject.getLogin())) {
             resultJson.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(resultJson.toString());
         }
 
-        if (existLogin(from)) {
+        if (existLogin(inputData.getString("from"))) {
+
             // return messages only with from no all messages
-            System.out.println("your from is " + from);
-            return null;
+            List<String> messagesList  = database.getMessagesFromUser(inputData.getString("from"), inputData.getString("myLogin"));
+
+            database.closeDatabase();
+
+            //System.out.println("your from is " + from);
+            return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(messagesList.toString());
+
+
+            //return null;
         } else {
             // todo change return empty json
             System.out.println("user dosnt exist ");
@@ -677,7 +711,9 @@ public class UserController {
         System.out.println("delete/login" + login);
 
 
-        if (user == null || !validToken(token,user.getToken())) { // check we have user and check the token
+        Database database = new Database();
+
+        if (user.getLogin() == null || !database.existToken(token,user.getLogin())) { // check we have user and check the token
             result.put("error", "Incorrect login or invalid TOKEN ");
             return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
         } else {
