@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@CrossOrigin(origins = {  "http://localhost:8081" })
+@CrossOrigin(origins = {  "http://localhost:4200/" })
 @RestController
 public class UserController {
     List<User> list = new ArrayList<User>();
@@ -51,6 +51,17 @@ public class UserController {
     // SIGN UP
 
         // input user registration
+
+    /*Input
+     *{
+
+"fname":"new user",
+"lname":"second name",
+"login":"user24",
+"password":"password123123"
+}
+    *
+    * */
     @RequestMapping(method = RequestMethod.POST, value = "/signup")
     public ResponseEntity<String> signup(@RequestBody String data) throws JSONException { // input data from body html page
 
