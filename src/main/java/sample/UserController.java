@@ -64,7 +64,7 @@ public class UserController {
     * */
     @RequestMapping(method = RequestMethod.POST, value = "/signup")
     public ResponseEntity<String> signup(@RequestBody String data) throws JSONException { // input data from body html page
-
+//
         System.out.println("input data are under");
         System.out.println(data);
 
@@ -80,8 +80,8 @@ public class UserController {
             // CHECK  EXIST LOGIN
             if (existLogin(jsonObject.getString("login"))) {  // take login into function exist Login   return true or false
                 JSONObject result = new JSONObject();          // create json object
-                result.put("error", "User already exists");         // put error message
-                return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(result.toString()); // to string okey
+                result.put("message", "Login already exists. Please Change Login ");         // put error message
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(result.toString()); // to string okey
                 // note what means contentType media type check the video
             }
 
@@ -92,8 +92,8 @@ public class UserController {
             if (password.isEmpty()) {
                 JSONObject result = new JSONObject();
 
-                result.put("error", "Password is a mandatory field");
-                return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(result.toString());
+                result.put("message", "Password is a mandatory field");
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(result.toString());
 
             }
 
@@ -115,7 +115,11 @@ public class UserController {
 
             System.out.println("Successfully created new account and save in database ");
 
-            return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(res.toString()); // to string json data
+
+            JSONObject messageFromServer = new JSONObject(); // create json
+            messageFromServer.put("message", "Account successfully created");
+
+            return ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(messageFromServer.toString()); // to string json data
 
 
             // return "I have all name okey ";
@@ -194,10 +198,12 @@ public class UserController {
                 System.out.println("loggedUSer class name and lname " + loggedUser.getLname() );
                 System.out.println("---                                         ----");
 
+/*
 
                 result.put("fname", loggedUser.getFname());
                 result.put("lname", loggedUser.getLname());
                 result.put("login", loggedUser.getLogin());
+*/
 
 
                 // put data into json object
@@ -243,7 +249,7 @@ public class UserController {
                 // better tocreate JSON object
 
 
-                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(result.toString());
+                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(token);
             } else {
                 result.put("error", "Invalid login or password");
                 return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(result.toString());
@@ -352,6 +358,7 @@ public class UserController {
                 if (database.existToken(token, user.getLogin())) {
 
 
+
                   //  System.out.println("change  passwrod to " + inputJson.getString("newpassword"));
                     String hashPass = hash(inputJson.getString("newpassword")); // create hash
 
@@ -387,11 +394,16 @@ public class UserController {
 ////////////////////// LOG history my login
     // input json login : peter and into the header put the token
 
-    @RequestMapping( value = "/log")
+    @RequestMapping(method = RequestMethod.POST, value = "/log") // todo potrebne zmeniz Authorization
     public ResponseEntity<String> log(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
         JSONObject obj = new JSONObject(data);
         JSONObject res = new JSONObject();
+
+        if (obj.getString("login").isEmpty()) {
+            res.put("error", "empty login ");
+            return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(res.toString());
+        }
 
         User userObject = getUser(obj.getString("login"));
 
@@ -403,7 +415,7 @@ public class UserController {
 
 
         if (obj.has("login")) {
-            //existLogin(obj.getString("login")) && existLogin(obj.getString("acceptor")
+            //existLogin(obj.getString("login")) && existLogin(obj.getString("acceptor")r
 
             if (existLogin(obj.getString("login"))) {
                 // res.put("message", "everythink is okey ");
