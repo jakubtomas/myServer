@@ -80,8 +80,8 @@ public class UserController {
             // CHECK  EXIST LOGIN
             if (existLogin(jsonObject.getString("login"))) {  // take login into function exist Login   return true or false
                 JSONObject result = new JSONObject();          // create json object
-                result.put("message", "Login already exists. Please Change Login ");         // put error message
-                return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(result.toString()); // to string okey
+                result.put("error", "Login already exists. Please Change Login ");         // put error message
+                return ResponseEntity.status(409).contentType(MediaType.APPLICATION_JSON).body(result.toString()); // to string okey
                 // note what means contentType media type check the video
             }
 
@@ -394,7 +394,7 @@ public class UserController {
 ////////////////////// LOG history my login
     // input json login : peter and into the header put the token
 
-    @RequestMapping(method = RequestMethod.POST, value = "/log") // todo potrebne zmeniz Authorization
+    @RequestMapping(method = RequestMethod.POST, value = "/log")
     public ResponseEntity<String> log(@RequestBody String data, @RequestHeader(name = "Authorization") String token) throws JSONException {
 
         JSONObject obj = new JSONObject(data);
