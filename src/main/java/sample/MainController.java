@@ -25,7 +25,7 @@ public class  MainController {
 */
 
 
-// C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe
+        // C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe
 
 
         //C:\Users\install\Desktop\vue project\my-app
@@ -33,3 +33,4 @@ public class  MainController {
         //http://localhost:8081/
     }
 }
+
